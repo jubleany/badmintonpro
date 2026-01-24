@@ -1,0 +1,7 @@
+{
+  "name": "Badminton Pro Manager",
+  "description": "A comprehensive badminton club management app featuring member registration, real-time match tracking, tournament generation, and live rankings with a high-performance neon aesthetic.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
