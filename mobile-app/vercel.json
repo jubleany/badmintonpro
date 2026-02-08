@@ -1,0 +1,15 @@
+{
+    "devCommand": "expo start --web",
+    "build": {
+        "env": {
+            "EXPO_WEB_uI_MODE": "light"
+        }
+    },
+    "framework": "other",
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}
