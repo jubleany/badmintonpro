@@ -5,7 +5,7 @@
             "EXPO_WEB_uI_MODE": "light"
         }
     },
-    "framework": "other",
+    "outputDirectory": "dist",
     "rewrites": [
         {
             "source": "/(.*)",
