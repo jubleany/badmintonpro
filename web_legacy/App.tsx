@@ -1,12 +1,15 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from './lib/supabase';
 import Home from './pages/Home';
 import RegisterMember from './pages/RegisterMember';
 import MemberList from './pages/MemberList';
 import GenerateMatch from './pages/GenerateMatch';
 import LiveMatches from './pages/LiveMatches';
 import Ranking from './pages/Ranking';
+import Login from './pages/Login';
 
 const BottomNav = () => {
   const location = useLocation();
@@ -41,19 +44,52 @@ const BottomNav = () => {
 };
 
 const App: React.FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [guestMode, setGuestMode] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      if (nextSession) {
+        setGuestMode(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <Router>
       <div className="min-h-screen bg-background-dark text-white font-body selection:bg-primary selection:text-black flex justify-center">
         <div className="w-full max-w-md relative pb-20 shadow-2xl border-x border-white/5 bg-background-dark">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/register" element={<RegisterMember />} />
-            <Route path="/members" element={<MemberList />} />
-            <Route path="/generate-match" element={<GenerateMatch />} />
-            <Route path="/live" element={<LiveMatches />} />
-            <Route path="/ranking" element={<Ranking />} />
-          </Routes>
-          <BottomNav />
+          {authLoading ? (
+            <div className="min-h-screen flex items-center justify-center text-white/40 text-sm">
+              로딩 중...
+            </div>
+          ) : !session && !guestMode ? (
+            <Login onGuestContinue={() => setGuestMode(true)} />
+          ) : (
+            <>
+              <Routes>
+                <Route path="/" element={<Home session={session} />} />
+                <Route path="/login" element={<Login onGuestContinue={() => setGuestMode(true)} />} />
+                <Route path="/register" element={<RegisterMember />} />
+                <Route path="/members" element={<MemberList />} />
+                <Route path="/generate-match" element={<GenerateMatch />} />
+                <Route path="/live" element={<LiveMatches />} />
+                <Route path="/ranking" element={<Ranking />} />
+              </Routes>
+              <BottomNav />
+            </>
+          )}
         </div>
       </div>
     </Router>

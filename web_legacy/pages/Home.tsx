@@ -1,9 +1,20 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 
-const Home: React.FC = () => {
+interface HomeProps {
+  session?: Session | null;
+}
+
+const Home: React.FC<HomeProps> = ({ session }) => {
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
 
   return (
     <div className="relative h-screen flex flex-col overflow-hidden">
@@ -22,9 +33,26 @@ const Home: React.FC = () => {
           <div className="w-2 h-6 bg-primary rounded-full shadow-neon"></div>
           <h2 className="text-xl font-bold italic tracking-tighter uppercase">Badminton Pro</h2>
         </div>
-        <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
-          <span className="material-symbols-outlined !text-xl">history</span>
-        </button>
+        {session ? (
+          <button
+            onClick={handleLogout}
+            className="px-3 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center gap-1.5 border border-white/10 text-xs font-bold hover:border-primary/50 transition-colors"
+            title={session.user.email || '로그아웃'}
+          >
+            <span className="max-w-[100px] truncate text-white/80">
+              {session.user.user_metadata?.name || session.user.email?.split('@')[0]}
+            </span>
+            <span className="material-symbols-outlined !text-base text-primary">logout</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate('/login')}
+            className="px-3 h-9 rounded-full bg-primary/20 backdrop-blur-md flex items-center gap-1 border border-primary/40 text-xs font-bold text-primary"
+          >
+            <span className="material-symbols-outlined !text-base">login</span>
+            로그인
+          </button>
+        )}
       </header>
 
       <main className="relative z-10 flex-1 flex flex-col justify-end p-6 gap-8 mb-24">

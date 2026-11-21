@@ -1,13 +1,40 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MOCK_MEMBERS } from '../constants';
 import { Member } from '../types';
+import { supabase } from '../lib/supabase';
 
 const MemberList: React.FC = () => {
   const navigate = useNavigate();
   const [members, setMembers] = useState<Member[]>(MOCK_MEMBERS.map(m => ({ ...m, isSelected: false })));
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        setMembers(
+          data.map((row: any) => ({
+            id: row.id,
+            name: row.name,
+            level: row.level,
+            gender: row.gender,
+            avatarUrl: row.avatar_url || `https://picsum.photos/seed/${row.id}/300`,
+            ranking: row.ranking ?? undefined,
+            status: row.status || '일반',
+            isSelected: false,
+          }))
+        );
+      }
+    };
+
+    fetchMembers();
+  }, []);
 
   const toggleSelection = (id: string) => {
     setMembers(prev => prev.map(m => m.id === id ? { ...m, isSelected: !m.isSelected } : m));

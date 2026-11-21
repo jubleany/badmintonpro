@@ -2,14 +2,44 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Level, Gender } from '../types';
+import { supabase } from '../lib/supabase';
 
 const RegisterMember: React.FC = () => {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [level, setLevel] = useState<Level>('자급');
   const [gender, setGender] = useState<Gender>('남');
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const levels: Level[] = ['자급', 'A', 'B', 'C', 'D', 'E', '초심'];
+
+  const handleRegister = async () => {
+    if (!name.trim()) {
+      setErrorMsg('이름을 입력해 주세요.');
+      return;
+    }
+
+    setSaving(true);
+    setErrorMsg(null);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase.from('members').insert({
+        name: name.trim(),
+        level,
+        gender,
+        status: '일반',
+        avatar_url: `https://picsum.photos/seed/${encodeURIComponent(name.trim())}/300`,
+        user_id: userData.user?.id ?? null,
+      });
+      if (error) throw error;
+      navigate('/members');
+    } catch (err: any) {
+      setErrorMsg(err?.message || '멤버 등록 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background-dark flex flex-col">
@@ -105,12 +135,18 @@ const RegisterMember: React.FC = () => {
         </section>
       </main>
 
-      <div className="sticky bottom-0 p-5 bg-gradient-to-t from-background-dark via-background-dark to-transparent">
+      <div className="sticky bottom-0 p-5 bg-gradient-to-t from-background-dark via-background-dark to-transparent space-y-2">
+        {errorMsg && (
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium">
+            {errorMsg}
+          </div>
+        )}
         <button 
-          onClick={() => navigate('/members')}
-          className="w-full h-14 rounded-2xl bg-primary text-black font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-neon-strong active:scale-[0.98] transition-transform"
+          onClick={handleRegister}
+          disabled={saving}
+          className="w-full h-14 rounded-2xl bg-primary text-black font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-neon-strong active:scale-[0.98] transition-transform disabled:opacity-50"
         >
-          등록 완료
+          {saving ? '등록 중...' : '등록 완료'}
           <span className="material-symbols-outlined font-bold">arrow_forward</span>
         </button>
       </div>
